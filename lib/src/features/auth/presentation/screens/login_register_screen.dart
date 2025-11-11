@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:spymatch/src/core/config/theme.dart';
 import 'package:spymatch/src/features/auth/presentation/providers/auth_provider.dart';
@@ -14,6 +15,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
   bool isLogin = true;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _selectedRole = 'coach';
 
   @override
   Widget build(BuildContext context) {
@@ -173,13 +175,13 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _RoleButton(icon: Icons.assignment, label: 'Entrenador', isSelected: true)),
+            Expanded(child: _RoleButton(icon: Icons.assignment, label: 'Entrenador', isSelected: _selectedRole == 'coach', onTap: () => setState(() => _selectedRole = 'coach'))),
             const SizedBox(width: 16),
-            Expanded(child: _RoleButton(icon: Icons.search, label: 'Ojeador')),
+            Expanded(child: _RoleButton(icon: Icons.search, label: 'Ojeador', isSelected: _selectedRole == 'scout', onTap: () => setState(() => _selectedRole = 'scout'))),
           ],
         ),
         const SizedBox(height: 16),
-        _RoleButton(icon: Icons.compare_arrows, label: 'Ambos roles', isFullWidth: true),
+        _RoleButton(icon: Icons.compare_arrows, label: 'Ambos roles', isFullWidth: true, isSelected: _selectedRole == 'both', onTap: () => setState(() => _selectedRole = 'both')),
       ],
     );
   }
@@ -196,11 +198,13 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
               _passwordController.text,
             );
           } else {
-            await authProvider.signUp(
+            await authProvider.signUpWithRole(
               _emailController.text,
               _passwordController.text,
+              _selectedRole!,
             );
           }
+           context.go('/home');
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(e.toString())),
@@ -275,39 +279,44 @@ class _RoleButton extends StatelessWidget {
     required this.label,
     this.isSelected = false,
     this.isFullWidth = false,
+    this.onTap,
   });
 
   final IconData icon;
   final String label;
   final bool isSelected;
   final bool isFullWidth;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: isFullWidth ? 80 : 120,
-      decoration: BoxDecoration(
-        color: isSelected ? AppTheme.primaryColor.withOpacity(0.2) : const Color(0xFF193328),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isSelected ? AppTheme.primaryColor : const Color(0xFF326751)),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: isFullWidth ? 80 : 120,
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor.withOpacity(0.2) : const Color(0xFF193328),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? AppTheme.primaryColor : const Color(0xFF326751)),
+        ),
+        child: isFullWidth
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: Colors.white, size: 32),
+                  const SizedBox(width: 16),
+                  Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: Colors.white, size: 32),
+                  const SizedBox(height: 8),
+                  Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ],
+              ),
       ),
-      child: isFullWidth
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 32),
-                const SizedBox(width: 16),
-                Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ],
-            )
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 32),
-                const SizedBox(height: 8),
-                Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ],
-            ),
     );
   }
 }

@@ -3,50 +3,38 @@ const admin = require("firebase-admin");
 const stripe = require("stripe")("YOUR_STRIPE_SECRET_KEY"); // Placeholder
 admin.initializeApp();
 
-exports.createStripeAccount = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "The function must be called while authenticated."
-    );
-  }
+// ... (previous Stripe functions)
 
-  const account = await stripe.accounts.create({
-    type: "express",
-    email: context.auth.token.email,
-  });
-
-  const accountLink = await stripe.accountLinks.create({
-    account: account.id,
-    refresh_url: "https://spymatch.com/reauth", // Placeholder
-    return_url: "https://spymatch.com/return", // Placeholder
-    type: "account_onboarding",
-  });
-
-  return { url: accountLink.url };
-});
-
-exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "The function must be called while authenticated."
-    );
-  }
-
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price: "YOUR_PRICE_ID", // Placeholder
-        quantity: 1,
+exports.newMissionNotification = functions.firestore
+  .document("missions/{missionId}")
+  .onCreate(async (snap, context) => {
+    const mission = snap.data();
+    const message = {
+      notification: {
+        title: "Nueva Misión Disponible",
+        body: `El club '${mission.club}' ha publicado una nueva misión de scouting en tu zona.`,
       },
-    ],
-    mode: "subscription",
-    success_url: "https://spymatch.com/success", // Placeholder
-    cancel_url: "https://spymatch.com/cancel", // Placeholder
-    client_reference_id: context.auth.uid,
+      topic: "new_missions", // Or target specific users
+    };
+
+    return admin.messaging().send(message);
   });
 
-  return { url: session.url };
-});
+exports.missionAcceptedNotification = functions.firestore
+  .document("missions/{missionId}")
+  .onUpdate(async (change, context) => {
+    const mission = change.after.data();
+    const previousMission = change.before.data();
+
+    if (mission.status === "accepted" && previousMission.status !== "accepted") {
+      const message = {
+        notification: {
+          title: "¡Misión Aceptada!",
+          body: `Tu misión para el partido '${mission.match}' ha sido aceptada.`,
+        },
+        topic: `user_${mission.creatorId}`, // Target the mission creator
+      };
+      return admin.messaging().send(message);
+    }
+    return null;
+  });

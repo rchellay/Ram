@@ -9,6 +9,7 @@ import 'package:spymatch/src/features/chats/data/repositories/firestore_chat_rep
 import 'package:spymatch/src/features/chats/presentation/providers/chat_provider.dart';
 import 'package:spymatch/src/features/missions/data/repositories/firestore_mission_repository.dart';
 import 'package:spymatch/src/features/missions/presentation/providers/mission_provider.dart';
+import 'package:spymatch/src/features/reports/presentation/providers/report_provider.dart';
 import 'package:spymatch/src/routes/app_router.dart';
 
 void main() async {
@@ -34,6 +35,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => ChatProvider(chatRepository: FirestoreChatRepository()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ReportProvider(),
         ),
       ],
       child: Builder(

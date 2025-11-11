@@ -1,8 +1,23 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:spymatch/src/core/config/theme.dart';
+import 'package:spymatch/src/features/reports/presentation/providers/report_provider.dart';
 
-class CreateReportScreen extends StatelessWidget {
+class CreateReportScreen extends StatefulWidget {
   const CreateReportScreen({super.key});
+
+  @override
+  State<CreateReportScreen> createState() => _CreateReportScreenState();
+}
+
+class _CreateReportScreenState extends State<CreateReportScreen> {
+  final _formKey = GlobalKey<FormState>();
+  File? _mediaFile;
+  final _nameController = TextEditingController();
+  final _strengthsController = TextEditingController();
+  final _weaknessesController = TextEditingController();
+  final _notesController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -15,111 +30,73 @@ class CreateReportScreen extends StatelessWidget {
         title: const Text('Nuevo Informe'),
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: _submitReport,
             child: const Text('Guardar', style: TextStyle(color: AppTheme.primaryColor)),
           )
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildSectionCard(
-            child: Column(
-              children: [
-                _buildDropdown('Plantilla de Informe', ['Informe de Jugador', 'Análisis de Equipo']),
-                const SizedBox(height: 16),
-                _buildTextField('Nombre del Jugador/Equipo', 'Ej: Lionel Messi / FC Barcelona'),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField('Fecha del Partido', '', isDatePicker: true)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildTextField('Lugar', 'Estadio del Partido')),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildSectionCard(
-            title: 'Análisis Cualitativo',
-            child: Column(
-              children: [
-                _buildTextArea('Puntos Fuertes', 'Describe las fortalezas clave observadas...'),
-                const SizedBox(height: 16),
-                _buildTextArea('Puntos Débiles', 'Describe las debilidades o áreas de mejora...'),
-                 const SizedBox(height: 16),
-                _buildTextArea('Notas Técnicas', 'Comentarios generales y observaciones técnicas...', maxLines: 3),
-              ],
-            ),
-          ),
-           const SizedBox(height: 24),
-          _buildSectionCard(
-            title: 'Análisis Táctico',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Sistema Táctico', style: TextStyle(color: Colors.white70)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  children: ['4-4-2', '4-3-3', '3-5-2', '4-2-3-1', '5-3-2', 'Otro']
-                      .map((system) => Chip(
-                            label: Text(system),
-                            backgroundColor: system == '4-3-3' ? AppTheme.primaryColor.withOpacity(0.3) : AppTheme.cardDark,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(color: system == '4-3-3' ? AppTheme.primaryColor : Colors.white24),
-                            ),
-                          ))
-                      .toList(),
-                ),
-                 const SizedBox(height: 16),
-                 const Text('Jugadores Clave', style: TextStyle(color: Colors.white70)),
-                 const SizedBox(height: 8),
-                 Wrap(
-                  spacing: 8.0,
-                  children: [
-                    Chip(
-                      label: const Text('P. González (DEL)'),
-                      onDeleted: (){},
-                    ),
-                     Chip(
-                      label: const Text('A. Fernández (MC)'),
-                      onDeleted: (){},
-                    ),
-                    ActionChip(
-                      label: const Text('Añadir Jugador'),
-                      avatar: const Icon(Icons.add),
-                      onPressed: (){},
-                    ),
-                  ],
-                 )
-              ],
-            ),
-          ),
-           const SizedBox(height: 24),
-           _buildSectionCard(
-            title: 'Multimedia',
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white24, style: BorderStyle.dashed, width: 2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Column(
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            _buildSectionCard(
+              child: Column(
                 children: [
-                  Icon(Icons.upload_file, size: 48, color: Colors.white54),
-                  SizedBox(height: 8),
-                  Text('Subir Vídeos', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
-                   SizedBox(height: 4),
-                  Text('Sube clips cortos de jugadas destacadas', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  _buildDropdown('Plantilla de Informe', ['Informe de Jugador', 'Análisis de Equipo']),
+                  const SizedBox(height: 16),
+                  _buildTextField('Nombre del Jugador/Equipo', 'Ej: Lionel Messi / FC Barcelona', _nameController),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildTextField('Fecha del Partido', '', null, isDatePicker: true)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildTextField('Lugar', 'Estadio del Partido', null)),
+                    ],
+                  ),
                 ],
               ),
             ),
-           )
-        ],
+            const SizedBox(height: 24),
+            _buildSectionCard(
+              title: 'Análisis Cualitativo',
+              child: Column(
+                children: [
+                  _buildTextArea('Puntos Fuertes', 'Describe las fortalezas clave observadas...', _strengthsController),
+                  const SizedBox(height: 16),
+                  _buildTextArea('Puntos Débiles', 'Describe las debilidades o áreas de mejora...', _weaknessesController),
+                   const SizedBox(height: 16),
+                  _buildTextArea('Notas Técnicas', 'Comentarios generales y observaciones técnicas...', _notesController, maxLines: 3),
+                ],
+              ),
+            ),
+             const SizedBox(height: 24),
+            _buildSectionCard(
+              title: 'Multimedia',
+              child: GestureDetector(
+                onTap: _pickMedia,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white24, style: BorderStyle.dashed, width: 2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: _mediaFile == null
+                      ? const Column(
+                          children: [
+                            Icon(Icons.upload_file, size: 48, color: Colors.white54),
+                            SizedBox(height: 8),
+                            Text('Subir Vídeos', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                             SizedBox(height: 4),
+                            Text('Sube clips cortos de jugadas destacadas', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                          ],
+                        )
+                      : Image.file(_mediaFile!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                ),
+              ),
+             )
+          ],
+        ),
       ),
        bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -134,7 +111,7 @@ class CreateReportScreen extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _submitReport,
                 child: const Text('Enviar Informe'),
               ),
             ),
@@ -142,6 +119,41 @@ class CreateReportScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _pickMedia() async {
+    final reportProvider = Provider.of<ReportProvider>(context, listen: false);
+    final file = await reportProvider.pickImage();
+    if (file != null) {
+      setState(() {
+        _mediaFile = file;
+      });
+    }
+  }
+
+  Future<void> _submitReport() async {
+    if (_formKey.currentState!.validate()) {
+      final reportProvider = Provider.of<ReportProvider>(context, listen: false);
+      try {
+        await reportProvider.createReport(
+          {
+            'name': _nameController.text,
+            'strengths': _strengthsController.text,
+            'weaknesses': _weaknessesController.text,
+            'notes': _notesController.text,
+          },
+          _mediaFile,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Informe enviado con éxito')),
+        );
+        Navigator.of(context).pop();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
   }
 
   Widget _buildSectionCard({String? title, required Widget child}) {
@@ -184,33 +196,47 @@ class CreateReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String label, String hintText, {bool isDatePicker = false}) {
+  Widget _buildTextField(String label, String hintText, TextEditingController? controller, {bool isDatePicker = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(color: Colors.white70)),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
+          controller: controller,
           decoration: InputDecoration(
             hintText: hintText,
             suffixIcon: isDatePicker ? const Icon(Icons.calendar_today) : null,
           ),
+           validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter some text';
+            }
+            return null;
+          },
         ),
       ],
     );
   }
 
-  Widget _buildTextArea(String label, String hintText, {int maxLines = 4}) {
+  Widget _buildTextArea(String label, String hintText, TextEditingController controller, {int maxLines = 4}) {
      return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(color: Colors.white70)),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
+          controller: controller,
           decoration: InputDecoration(
             hintText: hintText,
           ),
           maxLines: maxLines,
+           validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter some text';
+            }
+            return null;
+          },
         ),
       ],
     );

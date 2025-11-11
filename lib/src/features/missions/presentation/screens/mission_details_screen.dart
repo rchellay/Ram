@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:spymatch/src/core/config/theme.dart';
+import 'package:spymatch/src/features/auth/presentation/providers/auth_provider.dart';
+import 'package:spymatch/src/features/missions/presentation/providers/mission_provider.dart';
 
 class MissionDetailsScreen extends StatelessWidget {
-  const MissionDetailsScreen({super.key});
+  final String missionId;
+  const MissionDetailsScreen({super.key, required this.missionId});
 
   @override
   Widget build(BuildContext context) {
+    final missionProvider = Provider.of<MissionProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user!.uid;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -49,7 +57,18 @@ class MissionDetailsScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () async {
+                try {
+                  await missionProvider.acceptMission(missionId, userId);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Misión aceptada')),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString())),
+                  );
+                }
+              },
               child: const Text('Aceptar Misión'),
             ),
             TextButton(
