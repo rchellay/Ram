@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:spymatch/src/core/config/theme.dart';
+import 'package:spymatch/src/features/auth/presentation/providers/auth_provider.dart';
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -10,6 +12,8 @@ class LoginRegisterScreen extends StatefulWidget {
 
 class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
   bool isLogin = true;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +33,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
               const SizedBox(height: 24),
               if (!isLogin) _buildRoleSelection(),
               const SizedBox(height: 24),
-              _buildPrimaryButton(),
+              _buildPrimaryButton(context),
               if (isLogin) _buildForgotPassword(),
               _buildSocialLoginDivider(),
               _buildSocialLoginButton(),
@@ -111,6 +115,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
         const Text('Email', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         TextField(
+          controller: _emailController,
           decoration: InputDecoration(
             hintText: 'Introduce tu correo electrónico',
             hintStyle: const TextStyle(color: Color(0xFF92c9b2)),
@@ -134,6 +139,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
         const Text('Contraseña', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         TextField(
+          controller: _passwordController,
           obscureText: true,
           decoration: InputDecoration(
             hintText: 'Introduce tu contraseña',
@@ -178,9 +184,29 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     );
   }
 
-  Widget _buildPrimaryButton() {
+  Widget _buildPrimaryButton(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
     return ElevatedButton(
-      onPressed: () {},
+      onPressed: () async {
+        try {
+          if (isLogin) {
+            await authProvider.signIn(
+              _emailController.text,
+              _passwordController.text,
+            );
+          } else {
+            await authProvider.signUp(
+              _emailController.text,
+              _passwordController.text,
+            );
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
+      },
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.primaryColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

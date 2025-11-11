@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:spymatch/src/core/config/theme.dart';
+import 'package:spymatch/src/features/missions/presentation/providers/mission_provider.dart';
 
 class CreateMissionReviewScreen extends StatelessWidget {
   const CreateMissionReviewScreen({super.key});
@@ -80,20 +82,41 @@ class CreateMissionReviewScreen extends StatelessWidget {
          borderRadius: BorderRadius.circular(12),
        ),
       child: const Text(
-        '"Por favor, centrarse en su capacidad de desborde en el 1 contra 1, y su toma de decisiones en el último tercio del campo. Observar también su trabajo defensivo sin balón."',
+        '"Por favor, centrarse en su capacidad de desbordamiento en el 1 contra 1, y su toma de decisiones en el último tercio del campo. Observar también su trabajo defensivo sin balón."',
         style: TextStyle(color: Colors.white70),
       ),
     );
   }
 
   Widget _buildFooter(BuildContext context) {
+    final missionProvider = Provider.of<MissionProvider>(context, listen: false);
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ElevatedButton(
-            onPressed: () => _showSuccessDialog(context),
+            onPressed: () async {
+              try {
+                await missionProvider.createMission({
+                  'match': 'Real Madrid Castilla vs FC Barcelona Atlètic',
+                  'date': '28 de octubre, 2024 - 15:00',
+                  'location': 'Estadio Alfredo Di Stéfano',
+                  'reportType': 'Informe de Jugador Específico',
+                  'player': 'Lamine Yamal (Extremo Derecho)',
+                  'budget': 150.00,
+                  'paymentMethod': 'Visa terminada en •••• 1234',
+                  'instructions': '"Por favor, centrarse en su capacidad de desbordamiento en el 1 contra 1, y su toma de decisiones en el último tercio del campo. Observar también su trabajo defensivo sin balón."',
+                  'status': 'pending',
+                });
+                _showSuccessDialog(context);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
+              }
+            },
             child: const Text('Confirmar y Publicar Misión'),
           ),
           const SizedBox(height: 8),
@@ -112,7 +135,7 @@ class CreateMissionReviewScreen extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectanglebor(borderRadius: BorderRadius.circular(16)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

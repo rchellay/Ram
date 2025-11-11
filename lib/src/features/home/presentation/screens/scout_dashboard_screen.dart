@@ -1,12 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:spymatch/src/core/config/theme.dart';
+import 'package:spymatch/src/features/missions/presentation/providers/mission_provider.dart';
 
 class ScoutDashboardScreen extends StatelessWidget {
   const ScoutDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final missionProvider = Provider.of<MissionProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('SPYMATCH', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -19,13 +24,35 @@ class ScoutDashboardScreen extends StatelessWidget {
           )
         ],
       ),
-      body: ListView(
-        children: [
-          _buildHeader(context),
-          _buildTabs(),
-          _buildMap(),
-          _buildMissionCards(),
-        ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: missionProvider.missions,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Something went wrong'));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return ListView(
+            children: [
+              _buildHeader(context),
+              _buildTabs(),
+              _buildMap(),
+              ...snapshot.data!.docs.map((DocumentSnapshot document) {
+                Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
+                return _MissionCard(
+                  imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBi2QQAqiyCdNKtqHhh7zZYl5VcY_4LHZco3u6EkFkj8Vgtdfjy7kbWfSZV4p8hKcJg9gCSdt6S7SEf4CpHby6f9cNpuPGmFpyqRCZIAgL-h2iov0NOz8Smpkj8SQVz32A3eWf6BOLlEQ_pGy94GrBOzrCpp_w1XU2IOinIZ902s0bLLKKd2sAx24BB3zIdEMcruLRY-5y-Cfu_Wu3HYcKEUun6JsHgacAcpZgkt9v5UqmrRr9ibFDF2WHQlB46vnWOmXpDhf1FMA',
+                  category: data['reportType'],
+                  title: data['player'],
+                  details: data['match'],
+                  distanceAndReward: '${data['budget']} €',
+                );
+              }).toList(),
+            ],
+          );
+        },
       ),
     );
   }
@@ -84,31 +111,6 @@ class ScoutDashboardScreen extends StatelessWidget {
         ),
       ),
       child: const Center(child: Text('Map Placeholder', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold))),
-    );
-  }
-
-  Widget _buildMissionCards() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        children: [
-          _MissionCard(
-            imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBi2QQAqiyCdNKtqHhh7zZYl5VcY_4LHZco3u6EkFkj8Vgtdfjy7kbWfSZV4p8hKcJg9gCSdt6S7SEf4CpHby6f9cNpuPGmFpyqRCZIAgL-h2iov0NOz8Smpkj8SQVz32A3eWf6BOLlEQ_pGy94GrBOzrCpp_w1XU2IOinIZ902s0bLLKKd2sAx24BB3zIdEMcruLRY-5y-Cfu_Wu3HYcKEUun6JsHgacAcpZgkt9v5UqmrRr9ibFDF2WHQlB46vnWOmXpDhf1FMA',
-            category: 'Goalkeeper Evaluation',
-            title: 'Scout U19 Striker',
-            details: 'Amateur FC vs. Local United',
-            distanceAndReward: '2.5 km away - €50 Reward',
-          ),
-          const SizedBox(height: 16),
-          _MissionCard(
-            imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDZnS-KHH5N-V-jss3wtQynIMAM-cngcx4D-ntTH-ASPhLfzJqdYZxnk3VX6GSwTU-alrBuHHqvyvSQ6IHQVTTxok4IMkJTUoKRznt8rfHZsZdej2ZSKEcJD6NDVvHNpJ0MWmQTFg4qWPMPXHQugpLS5WnWoYC-vhDOiEavg1txY1OpKV_TGbInLRU98StI2B6rzrZdxti59GyMIfYLDcN3us70mNf8dEJN2NsZ3n1xmPv22VtXdBj2ifTNHzaDX_spGNZ9sMeEgg',
-            category: 'Midfielder Analysis',
-            title: 'Assess U17 Playmaker',
-            details: 'City Rovers vs. Regional Talent',
-            distanceAndReward: '5.1 km away - €75 Reward',
-          ),
-        ],
-      ),
     );
   }
 }

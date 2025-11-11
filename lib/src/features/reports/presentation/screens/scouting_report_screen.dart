@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:spymatch/src/core/config/theme.dart';
 
 class ScoutingReportScreen extends StatelessWidget {
@@ -55,6 +56,10 @@ class ScoutingReportScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+       floatingActionButton: FloatingActionButton(
+        onPressed: () => context.go('/create-report'),
+        child: const Icon(Icons.add),
       ),
     );
   }
