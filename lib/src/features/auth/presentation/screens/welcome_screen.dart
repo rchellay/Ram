@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -127,6 +128,7 @@ class WelcomeScreen extends StatelessWidget {
           title: 'Soy Entrenador',
           subtitle: 'Encuentra jugadores y gestiona tu equipo.',
           primaryColor: primaryColor,
+          onTap: () => context.go('/login'),
         ),
         const SizedBox(height: 12),
         _RoleCard(
@@ -134,6 +136,7 @@ class WelcomeScreen extends StatelessWidget {
           title: 'Soy Ojeador',
           subtitle: 'Descubre y sigue a las próximas estrellas.',
           primaryColor: primaryColor,
+          onTap: () => context.go('/login'),
         ),
         const SizedBox(height: 12),
         _RoleCard(
@@ -141,6 +144,7 @@ class WelcomeScreen extends StatelessWidget {
           title: 'Soy Ambos',
           subtitle: 'Combina la gestión de equipo y el scouting.',
           primaryColor: primaryColor,
+          onTap: () => context.go('/login'),
         ),
       ],
     );
@@ -158,9 +162,7 @@ class WelcomeScreen extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: () {
-            // TODO: Navigate to Sign In Screen
-          },
+          onTap: () => context.go('/login'),
           child: Text(
             'Inicia sesión',
             style: TextStyle(
@@ -181,19 +183,19 @@ class _RoleCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.primaryColor,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final Color primaryColor;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // TODO: Handle role selection
-      },
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
