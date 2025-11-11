@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:spymatch/src/core/config/theme.dart';
+import 'package:spymatch/src/features/payments/data/services/stripe_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SubscriptionsScreen extends StatefulWidget {
   const SubscriptionsScreen({super.key});
@@ -10,6 +12,7 @@ class SubscriptionsScreen extends StatefulWidget {
 
 class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   bool isAnnual = false;
+  final stripeService = StripeService();
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +175,18 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
               )),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () async {
+               try {
+              final url = await stripeService.createStripeCheckout();
+              if (await canLaunchUrl(Uri.parse(url))) {
+                await launchUrl(Uri.parse(url));
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(e.toString())),
+              );
+            }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: isPopular ? AppTheme.primaryColor : AppTheme.primaryColor.withOpacity(0.2),
               minimumSize: const Size(double.infinity, 50),

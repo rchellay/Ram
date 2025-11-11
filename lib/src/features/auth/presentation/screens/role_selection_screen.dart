@@ -1,11 +1,19 @@
-import 'package.flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:spymatch/src/core/config/theme.dart';
+import 'package:spymatch/src/features/auth/presentation/providers/auth_provider.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -13,18 +21,16 @@ class RoleSelectionScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildHeader(context),
+              _buildHeader(context, user),
               const Spacer(),
-              _buildTitle(context),
+              _buildTitle(context, user),
               const SizedBox(height: 32),
               _RoleCard(
                 icon: Icons.draw,
                 title: 'Modo Entrenador',
                 subtitle: 'Publica necesidades de tu equipo, gestiona candidatos y contacta ojeadores.',
                 iconBackgroundColor: const Color(0xFF28A745),
-                onTap: () {
-                  // Navigate to Coach Dashboard
-                },
+                onTap: () => _updateRoleAndNavigate(context, 'coach'),
               ),
               const SizedBox(height: 16),
               _RoleCard(
@@ -32,12 +38,10 @@ class RoleSelectionScreen extends StatelessWidget {
                 title: 'Modo Ojeador',
                 subtitle: 'Descubre nuevos talentos, analiza perfiles de jugadores y responde a ofertas.',
                 iconBackgroundColor: const Color(0xFF007BFF),
-                onTap: () {
-                  // Navigate to Scout Dashboard
-                },
+                onTap: () => _updateRoleAndNavigate(context, 'scout'),
               ),
               const Spacer(flex: 2),
-              _buildLogoutButton(),
+              _buildLogoutButton(context),
             ],
           ),
         ),
@@ -45,7 +49,21 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Future<void> _updateRoleAndNavigate(BuildContext context, String role) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'email': user.email,
+        'role': role,
+      }, SetOptions(merge: true));
+    }
+
+    context.go('/home');
+  }
+
+  Widget _buildHeader(BuildContext context, User? user) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -70,13 +88,13 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle(BuildContext context) {
+  Widget _buildTitle(BuildContext context, User? user) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Hola, Alex',
-          style: TextStyle(color: Colors.white, fontSize: 16),
+        Text(
+          'Hola, ${user?.email ?? ''}',
+          style: const TextStyle(color: Colors.white, fontSize: 16),
         ),
         const SizedBox(height: 8),
         Text(
@@ -90,10 +108,12 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton() {
+  Widget _buildLogoutButton(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     return TextButton.icon(
-      onPressed: () {
-        // Handle logout
+      onPressed: () async {
+        await authProvider.signOut();
+        context.go('/');
       },
       icon: const Icon(Icons.logout, color: Colors.white60),
       label: const Text(

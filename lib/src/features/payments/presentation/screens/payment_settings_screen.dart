@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:spymatch/src/core/config/theme.dart';
+import 'package:spymatch/src/features/payments/data/services/stripe_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentSettingsScreen extends StatelessWidget {
   const PaymentSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final stripeService = StripeService();
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -52,7 +56,18 @@ class PaymentSettingsScreen extends StatelessWidget {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton.icon(
-          onPressed: () {},
+          onPressed: () async {
+            try {
+              final url = await stripeService.createStripeAccount();
+              if (await canLaunchUrl(Uri.parse(url))) {
+                await launchUrl(Uri.parse(url));
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(e.toString())),
+              );
+            }
+          },
           icon: const Icon(Icons.add_circle),
           label: const Text('Añadir Método de Pago'),
         ),
